@@ -2,156 +2,70 @@
 
 import os
 import sys
-from PTL import Image
+from PIL import Image
 import numpy as np
 
-def open_image(path):                                                            #Function to open the image 
+def open_image(path):                                                 #Open image and get the values for RGB for each pixel                                           
     image=Image.open(path)    
-    #Return image in the form of an array of tuples with each element containing the RGB value for each pixel
+    
     return np.asarray(image)/255
 
-def K_random_centroid( A , K):
-    m=len(A)
-                                              #Randomly pick K different elements of the linear array and return their indices
+def K_random_centroid(A , K):                                         #Randomly choose K points in the image array
+    m=len(A)                                                   
     return A[np.random.choice(m,K,replace=False),:]
-   
-def closest_centroid(A,centroids):
+
+def closest_centroid(A,centroids):                                    #Find the centroid closest to any given image point by calculating the norm of RGB
     m=len(A)
-    c=np.zeros(m)                                            #defines an array of size m and initialize it to zero
+    c=np.zeros(m)                            
     for i in range(m):
-        distance=np.linalg.norm(A[i]-centroids,axis=1)
-                                                               '''Here we take RGB as the three main axis and calculate the
-                                                                   norm of the colour of a point and the centroids'''
-        c[i]=np.argmin(distances)                          #We take the index of the centroid which is closest to a given point
+        distances = np.linalg.norm(A[i] - centroids, axis=1)
+        c[i] = np.argmin(distances)            
     return c
 
-def mean_centroids(A,index,K):                                    #Function to find the finer adjustment for each centroid 
-    a,s=A.shape
-    centroids=np.zero((K,s))                        
-    for i in range(K):
-        temp=A[np.where(index==k)]                                  
-        mean=[np.mean(column) for column in temp.T]         #Mean of RGB values of points coresseponding to each point which has the centroid as it's closest
-        centroids[k]=mean
+
+def compute_means(A, idx, K):                                         #For any centroid find the mean of RGB values of the points for which it is the closest centroid
+    _, n = A.shape
+    centroids = np.zeros((K, n))
+    for k in range(K):
+        examples = A[np.where(idx == k)]
+        mean = [np.mean(column) for column in examples.T]
+        centroids[k] = mean
     return centroids
 
-def find_K(A,K,max_iters):
-    m=len(a)
-    centroids=K_random_centroid
+
+
+
+def find_K(A,K,max_iters=20):                                         #Tune the centroid to get the best set of K points that are best suited for the image
+    centroids=K_random_centroid(A,K)
     prev_centroids=centroids
-    for _ in range(max_iters=20):
-        index=closest_centroid(A,centroids)               #The index of the centroid closest to every point in the image
-        centroids=mean_centroid(A,index,K)                #Update the centroids to a more closer value
-        if (centroids==prev_centroids).all():
-            return centroids                              #No better value exist
+    for _ in range(max_iters):
+        idx=closest_centroid(A,centroids)               
+        centroids = compute_means(A, idx, K)       
+        if ( prev_centroids==centroids).all():
+            return centroids                            
         else:
             prev_centroids=centroids
-    return centroids,index
+    return centroids,idx
         
     
-    def main():
-                                                           #Load the image and get it's RGB values in an array
-        image=open_image('''path''')
+def main():
+    image=open_image('imeg.jpeg')                                      
         
-        w,h,d=image.shape                                  #Get the image dimensions the width height and the depth
+    w,h,d=image.shape                                  
         
-        A=image.reshape((w*h,d))                          #reshape the image array obtained from the image into a linear array 
+    A=image.reshape((w*h,d))                          
         
-        K=int(input("Enter the number of different colours : "))      # The number of colors in the output image
-        
-        colors,_=find_K(A,K,max_iters=20)                 #Best centroid values
-        
-        index=closest_centroid(A ,colors)                 #Index of centroid closest to a point in the image
-        ch=int(input("Enter the shade value : ")
-        #Reconstruct the image
-        index=np.array(index,dtype=np.uint8)
-        A_reconstructed=np.array(colors[index,:]*ch,dtype=np.uint8).reshape((w,h,d))
-               compressed_image=Image.fromarray(A_reconstructed)
+    K=int(input("Enter the scale value : "))
+    print("Procedure begins ....")
+    colors,_=find_K(A,K,max_iters=10)                 
+    ch=int(input("Enter the output type"))
+    idx=closest_centroid(A ,colors)      
+    #Reconstruct the image           
+    idx = np.array(idx, dtype=np.uint8)
+    A_reconstructed = np.array(colors[idx, :] * ch, dtype=np.uint8).reshape((w, h, d))
+    #Save the output file 
+    compressed_image = Image.fromarray(A_reconstructed)
+    compressed_image.save('out.jpeg')
                
-               compressed_image.save('out.png')
-               
-if __name__=='__main__':
-          main()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+if __name__ == '__main__':
+    main()
