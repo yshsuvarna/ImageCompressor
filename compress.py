@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 import os
 import sys
@@ -32,13 +32,10 @@ def compute_means(A, idx, K):                                         #For any c
         centroids[k] = mean
     return centroids
 
-
-
-
-def find_K(A,K,max_iters=20):                                         #Tune the centroid to get the best set of K points that are best suited for the image
+def find_K(A,K,max_iters=10):                                         #Tune the centroid to get the best set of K points that are best suited for the image
     centroids=K_random_centroid(A,K)
     prev_centroids=centroids
-    for _ in range(max_iters):
+    for j in range(max_iters):
         idx=closest_centroid(A,centroids)               
         centroids = compute_means(A, idx, K)       
         if ( prev_centroids==centroids).all():
@@ -49,23 +46,28 @@ def find_K(A,K,max_iters=20):                                         #Tune the 
         
     
 def main():
-    image=open_image('imeg.jpeg')                                      
+    try:
+       image_path = sys.argv[1]
+       assert os.path.isfile('path.webp')
+    except (IndexError, AssertionError):
+        print('Please specify an image')
+    image=open_image('imae.jpg')                                      
         
     w,h,d=image.shape                                  
         
     A=image.reshape((w*h,d))                          
         
-    K=int(input("Enter the scale value : "))
+    K=25#int(input("Enter the scale value : "))
     print("Procedure begins ....")
     colors,_=find_K(A,K,max_iters=10)                 
-    ch=int(input("Enter the output type"))
+    ch=-255#int(input("Enter the output type"))
     idx=closest_centroid(A ,colors)      
     #Reconstruct the image           
     idx = np.array(idx, dtype=np.uint8)
-    A_reconstructed = np.array(colors[idx, :] * ch, dtype=np.uint8).reshape((w, h, d))
+    A_reconstructed = np.array(colors[idx, :] * ch, dtype=np.uint8).reshape((w,h,d))
     #Save the output file 
     compressed_image = Image.fromarray(A_reconstructed)
-    compressed_image.save('out.jpeg')
+    compressed_image.save('out1.jpeg')
                
 if __name__ == '__main__':
     main()
